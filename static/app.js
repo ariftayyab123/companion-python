@@ -6,15 +6,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const voiceSelect = document.getElementById('voice-select');
     const status = document.getElementById('status');
 
-    const openMouthImg = `/static/images/char-mouth-open.png?v=${sessionId}`;
-    const closedMouthImg = `/static/images/char-mouth-closed.png?v=${sessionId}`;
+    const idleImg = `/static/images/amaan_idle.png?v=${sessionId}`;
+    const visemeFrames = [
+        `/static/images/amaan_a.png?v=${sessionId}`,
+        `/static/images/amaan_e.png?v=${sessionId}`,
+        `/static/images/amaan_o.png?v=${sessionId}`,
+        `/static/images/amaan_u.png?v=${sessionId}`,
+        `/static/images/amaan_mbp.png?v=${sessionId}`,
+        `/static/images/amaan_idle.png?v=${sessionId}`
+    ];
 
     // Apply cache-busted source immediately and preload images
-    characterImage.src = closedMouthImg;
-    const preloadOpen = new Image();
-    preloadOpen.src = openMouthImg;
-    const preloadClosed = new Image();
-    preloadClosed.src = closedMouthImg;
+    characterImage.src = idleImg;
+    visemeFrames.forEach(src => {
+        const img = new Image();
+        img.src = src;
+    });
 
     let voices = [];
     let lipSyncInterval;
@@ -96,21 +103,31 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         utterance.onstart = () => {
-            let mouthOpen = true;
+            let frameIdx = 0;
+            const speakingSequence = [
+                visemeFrames[0], // a
+                visemeFrames[1], // e
+                visemeFrames[2], // o
+                visemeFrames[5], // idle
+                visemeFrames[4], // mbp
+                visemeFrames[3], // u
+                visemeFrames[1], // e
+                visemeFrames[5], // idle
+            ];
             lipSyncInterval = setInterval(() => {
-                characterImage.src = mouthOpen ? openMouthImg : closedMouthImg;
-                mouthOpen = !mouthOpen;
-            }, 150);
+                characterImage.src = speakingSequence[frameIdx % speakingSequence.length];
+                frameIdx++;
+            }, 140);
         };
 
         utterance.onend = () => {
             clearInterval(lipSyncInterval);
-            characterImage.src = closedMouthImg;
+            characterImage.src = idleImg;
         };
 
         utterance.onerror = () => {
             clearInterval(lipSyncInterval);
-            characterImage.src = closedMouthImg;
+            characterImage.src = idleImg;
         };
 
         speechSynthesis.speak(utterance);
